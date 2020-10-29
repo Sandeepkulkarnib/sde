@@ -1,0 +1,90 @@
+﻿apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/instance: crmbf-sde-007
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: java-1.8-cronjob
+    app.kubernetes.io/version: "1.8"
+    helm.sh/chart: java-1.8-cronjob-1.1.1
+  name: crmbf-sde-007
+  selfLink: /apis/batch/v1beta1/namespaces/crmbf-us-qa/cronjobs/crmbf-sde-007
+spec:
+  concurrencyPolicy: Allow
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      parallelism: 1
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+          - env:
+            - name: APP_NAME
+              value: crmbf-sde-007
+            - name: ENV
+              value: qa
+            - name: ENVCONSUL_ADDR
+            - name: ENVCONSUL_TOKEN
+            - name: ENVCONSUL_PATH
+            - name: JAVA_OPTS
+              value: -Xmx1024m -javaagent:/newrelic/newrelic.jar -Dspring.profiles.active=qa
+                -Dspring.cloud.consul.host=consul.service.schl-np-us-east.consul -Dspring.cloud.consul.config.acl-token=55422422-a6e1-dc05-fbcc-6c6ad343b193
+                -Dhawtio.authenticationEnabled=false
+            - name: NEW_RELIC_APP_NAME
+              value: crmbf-sde-007-qa
+            - name: NEW_RELIC_LICENSE_KEY
+              value: 530dbae82d3cc4b13c37939054ed8b04a9a0f35b
+            image: scholastic-image-hub.jfrog.io/crmbf-us/crmbf-sde-007:SFDC-23943-2498cdf-202008311940
+            imagePullPolicy: IfNotPresent
+            name: crmbf-sde-007
+            resources:
+              limits:
+                cpu: "1"
+                memory: 2Gi
+              requests:
+                cpu: 100m
+                memory: 1Gi
+            terminationMessagePath: /qa/termination-log
+            terminationMessagePolicy: File
+            volumeMounts:
+            - mountPath: /newrelic
+              name: newrelic
+          dnsPolicy: ClusterFirst
+          imagePullSecrets:
+          - name: jfrog-image-hub
+          initContainers:
+          - command:
+            - /bin/sh
+            - -c
+            - curl -o /newrelic/newrelic.jar https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic.jar;
+              curl -o /newrelic/newrelic.yml https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic.yml;
+              echo "Successfully downloaded file into /newrelic/newrelic.jar"
+            image: scholastic-image-hub.jfrog.io/scholastic/alpine-curl:v1.0.0
+            imagePullPolicy: IfNotPresent
+            name: install-newrelic-container
+            resources: {}
+            terminationMessagePath: /qa/termination-log
+            terminationMessagePolicy: File
+            volumeMounts:
+            - mountPath: /newrelic
+              name: newrelic
+          restartPolicy: OnFailure
+          schedulerName: default-scheduler
+          securityContext:
+            fsGroup: 65534
+          serviceAccount: crm-nonprod-batch
+          serviceAccountName: crm-nonprod-batch
+          terminationGracePeriodSeconds: 30
+          volumes:
+          - emptyDir: {}
+            name: newrelic
+  schedule: 0 17 * * *
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 3
+  suspend: false
+status: {}
